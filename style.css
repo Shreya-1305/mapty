@@ -77,6 +77,26 @@ a:visited {
   grid-template-columns: 1fr 1fr 1fr 1fr;
   gap: 0.75rem 1.5rem;
 }
+
+.additional-functionality {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 1.2rem;
+  border: 1px solid #ececec;
+  border-radius: 5px;
+  letter-spacing: 0.8px;
+  padding: 0.5rem;
+}
+
+.additional-icons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 1.8rem;
+  width: 1.8rem;
+}
 .workout--running {
   border-left: 5px solid var(--color-brand--2);
 }
