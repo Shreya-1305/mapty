@@ -116,7 +116,8 @@
         </form>
 
         <!-- <li class="workout workout--running" data-id="1234567890">
-          <div class="additional-functionality edit">
+          
+          <div class="additional-functionality edit" >
             <div>Edit</div>
             <div class="additional-icons edit-icon">
               <ion-icon name="pencil-sharp"></ion-icon>
@@ -182,16 +183,17 @@
         </li> -->
       </ul>
 
-      <p class="copyright">
-        &copy; Copyright by
-        <a
-          class="twitter-link"
-          target="_blank"
-          href="https://twitter.com/jonasschmedtman"
-          >Jonas Schmedtmann</a
-        >. Use for learning or your portfolio. Don't use to teach. Don't claim
-        as your own.
-      </p>
+      <div
+        class="delete-container"
+        style="display: none; width: 100%; justify-content: center"
+      >
+        <div class="additional-functionality delete-all">
+          <div style="align-self: center">Delete All Workouts</div>
+          <div class="additional-icons edit-icon">
+            <ion-icon name="trash"></ion-icon>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div id="map"></div>

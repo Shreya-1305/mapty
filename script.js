@@ -88,15 +88,16 @@ const inputElevation = document.querySelector('.form__input--elevation');
 const inputElevationEdit = document.querySelector(
   '.form__input--elevation-edit'
 );
-const footer = document.querySelector('.copyright');
-const edit = document.querySelector('.edit');
 const formEdit = document.querySelector('.form-edit');
+const deleteAll = document.querySelector('.delete-all');
+const deleteContainer = document.querySelector('.delete-container');
 
 class App {
   #map;
   #mapEvent;
   #workouts = [];
   #mapZoomLevel = 13;
+  #currentWorkoutEL = 12;
 
   constructor() {
     // Get users position
@@ -109,7 +110,13 @@ class App {
     mainForm.addEventListener('submit', this._newWorkout.bind(this));
 
     inputType.addEventListener('change', this._toggleElevationField.bind(this));
-    containerWorkouts.addEventListener('click', this._moveToPopup.bind(this));
+    containerWorkouts.addEventListener(
+      'click',
+      this.containerEvents.bind(this)
+    );
+
+    formEdit.addEventListener('submit', this._editWorkout.bind(this));
+    deleteAll.addEventListener('click', this._deleteAllWorkouts.bind(this));
 
     // footer.addEventListener('click', this._sequentialInsertion.bind(this));
 
@@ -150,6 +157,7 @@ class App {
   _showFormEdit() {
     formEdit.classList.remove('hidden');
     inputDistanceEdit.focus();
+    console.log(this.#currentWorkoutEL);
   }
 
   _hideMainForm() {
@@ -182,9 +190,14 @@ class App {
     inputCadence.closest('.form__row').classList.toggle('form__row--hidden');
   }
 
-  _editWorkout(_, workout, e) {
+  _editWorkout(e) {
     e.preventDefault();
 
+    console.log(this);
+    console.log(this.#currentWorkoutEL);
+    const workout = this.#workouts.find(
+      work => work.id === this.#currentWorkoutEL.dataset.id
+    );
     console.log(e.target);
     console.log(workout);
 
@@ -221,6 +234,9 @@ class App {
         )
       )
         return alert('Inputs have to be positive number');
+
+      this.#workouts[w].pace =
+        this.#workouts[w].duration / this.#workouts[w].distance;
     }
     // If workout cycling , create cycling object
 
@@ -239,7 +255,12 @@ class App {
         !allPositive(this.#workouts[w].distance, this.#workouts[w].duration)
       )
         return alert('Inputs have to be positive number');
+
+      this.#workouts[w].speed =
+        this.#workouts[w].distance / this.#workouts[w].duration;
     }
+
+    console.log(workout);
 
     console.log(this.#workouts);
 
@@ -307,6 +328,7 @@ class App {
     // Add new object to workout Array
     this.#workouts.push(workout);
 
+    if (this.#workouts.length > 0) deleteContainer.style.display = 'flex';
     // Render workout on map as marker
     this._renderWorkoutMarker(workout);
 
@@ -346,18 +368,7 @@ class App {
     let html = `<li class="workout workout--${workout.type}" data-id="${
       workout.id
     }">
-    <div class="additional-functionality edit">
-    <div>Edit</div>
-    <div class="additional-icons edit-icon">
-      <ion-icon name="pencil-sharp"></ion-icon>
-    </div>
-  </div>
-  <div class="additional-functionality remove">
-    <div>Remove</div>
-    <div class="additional-icons remove-icon">
-      <ion-icon name="remove-circle"></ion-icon>
-    </div>
-  </div>
+    
       <h2 class="workout__title">${workout.description}</h2>
       <div class="workout__details">
         <span class="workout__icon">${
@@ -384,7 +395,22 @@ class App {
       <span class="workout__value">${workout.cadence}</span>
       <span class="workout__unit">spm</span>
     </div>
-  </li>`;
+    <div class="additional-functionalities">
+    <div class="additional-functionality edit" style="border-bottom: 1.5px solid #00c46a;">
+  <div style="align-self: center">Edit</div>
+  <div class="additional-icons edit-icon">
+    <ion-icon name="pencil-sharp"></ion-icon>
+  </div>
+</div>
+<div class="additional-functionality remove" style="border-bottom: 1.5px solid #00c46a;">
+  <div style="align-self: center">Remove</div>
+  <div class="additional-icons remove-icon">
+    <ion-icon name="remove-circle"></ion-icon>
+  </div>
+</div>
+</div>
+</li>
+  `;
 
     if (workout.type === 'cycling')
       html += `<div class="workout__details">
@@ -397,7 +423,23 @@ class App {
      <span class="workout__value">${workout.elevationGain}</span>
      <span class="workout__unit">m</span>
    </div>
-  </li>`;
+   <div class="additional-functionalities">
+    <div class="additional-functionality edit" style="border-bottom: 1.5px solid #ffb545;">
+  <div style="align-self: center">Edit</div>
+  <div class="additional-icons edit-icon">
+    <ion-icon name="pencil-sharp"></ion-icon>
+  </div>
+</div>
+<div class="additional-functionality remove" style="border-bottom: 1.5px solid #ffb545;">
+  <div style="align-self: center">Remove</div>
+  <div class="additional-icons remove-icon">
+    <ion-icon name="remove-circle"></ion-icon>
+  </div>
+</div>
+</div>
+</li>
+  `;
+
     return html;
   }
 
@@ -427,49 +469,42 @@ class App {
     });
   }
 
-  _edit(workout) {
-    formEdit.addEventListener(
-      'submit',
-      this._editWorkout.bind(this, formEdit, workout)
-    );
-  }
-
-  _reoveSubmitListener(workout) {
-    formEdit.removeEventListener(
-      'submit',
-      this._editWorkout.bind(this, formEdit, workout)
-    );
-  }
-
-  _moveToPopup(e) {
-    const workoutEl = e.target.closest('.workout');
-
-    if (!workoutEl) return;
-
+  containerEvents(e) {
+    if (e.target.closest('form')) return;
+    if (!e.target.closest('.workout')) return;
+    // debugger;
+    this.#currentWorkoutEL = e.target.closest('.workout');
+    console.log(this.#currentWorkoutEL);
     const workout = this.#workouts.find(
-      work => work.id === workoutEl.dataset.id
+      work => work.id === this.#currentWorkoutEL.dataset.id
     );
+    this._moveToPopup(workout);
 
+    if (e.target.closest('.edit')) {
+      console.log(this.#currentWorkoutEL);
+      this.#currentWorkoutEL = e.target.closest('.workout');
+      console.log(e.target.closest('.edit'));
+      this._showFormEdit();
+    }
+
+    if (e.target.closest('.remove')) {
+      this.#currentWorkoutEL = e.target.closest('.workout');
+      console.log(this.#currentWorkoutEL);
+      this._removeWorkout(workout);
+    }
+
+    // // using public interface
+    workout.click();
+    // this.#currentWorkoutEL = null;
+  }
+
+  _moveToPopup(workout) {
     this.#map.setView(workout.coords, this.#mapZoomLevel, {
       animate: true,
       pan: {
         duration: 1,
       },
     });
-
-    if (e.target.closest('.edit')) {
-      console.log(e.target.closest('.edit'));
-      this._showFormEdit();
-      this._edit(workout);
-      this._reoveSubmitListener(workout);
-    }
-
-    if (e.target.closest('.remove')) {
-      this._removeWorkout(workout);
-    }
-
-    // // using public interface
-    workout.click();
   }
 
   _removeWorkout(workout) {
@@ -478,8 +513,8 @@ class App {
     );
     this._sequentialInsertion();
 
+    if (this.#workouts.length == 0) deleteContainer.style.display = 'none';
     // Set local storage to all workouts
-
     this._setLocalStorage();
   }
 
@@ -507,7 +542,7 @@ class App {
       return obj;
     });
     console.log(this.#workouts);
-
+    if (this.#workouts.length > 0) deleteContainer.style.display = 'flex';
     this.#workouts.forEach(work => {
       this._renderWorkout(work);
     });
@@ -518,9 +553,18 @@ class App {
     location.reload();
     localStorage.setItem('serialNumber', 0);
   }
+
+  _deleteAllWorkouts() {
+    if (window.confirm(`Want to delete all Workouts`)) {
+      this.reset();
+    } else {
+      return;
+    }
+  }
 }
 
 const app = new App();
+console.log(app);
 
 // let arr = [4, 5, 8, 6, 3];
 
