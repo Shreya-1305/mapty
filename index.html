@@ -39,7 +39,6 @@
   <body>
     <div class="sidebar">
       <img src="logo.png" alt="Logo" class="logo" />
-
       <ul class="workouts">
         <form class="form main-form hidden">
           <div class="form__row">
@@ -116,7 +115,6 @@
         </form>
 
         <!-- <li class="workout workout--running" data-id="1234567890">
-          
           <div class="additional-functionality edit" >
             <div>Edit</div>
             <div class="additional-icons edit-icon">
@@ -184,9 +182,37 @@
       </ul>
 
       <div
-        class="delete-container"
-        style="display: none; width: 100%; justify-content: center"
+        class="container"
+        style="display: none; width: 100%; justify-content: space-around"
       >
+        <div class="sort">
+          <form>
+            <!-- <label style="margin-right: 1rem; font-size: 1.2rem">Sort</label> -->
+            <select
+              class="form__input form-input--sortType"
+              style="
+                width: fit-content;
+                font-size: 1.2rem;
+                box-shadow: 0px 0px 2px white;
+              "
+            >
+              <option
+                value=""
+                style="
+                  pointer-events: none;
+                  color: white;
+                  background-color: #42484d;
+                  font-weight: bold;
+                "
+              >
+                Sort by
+              </option>
+              <option value="date">Date</option>
+              <option value="distance">Distance</option>
+              <option value="duration">Duration</option>
+            </select>
+          </form>
+        </div>
         <div class="additional-functionality delete-all">
           <div style="align-self: center">Delete All Workouts</div>
           <div class="additional-icons edit-icon">

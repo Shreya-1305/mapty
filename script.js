@@ -80,7 +80,8 @@ const inputElevationEdit = document.querySelector(
 );
 const formEdit = document.querySelector('.form-edit');
 const deleteAll = document.querySelector('.delete-all');
-const deleteContainer = document.querySelector('.delete-container');
+const Container = document.querySelector('.container');
+const sortType = document.querySelector('.form-input--sortType');
 
 class App {
   #map;
@@ -93,25 +94,18 @@ class App {
   constructor() {
     // Get users position
     this._getPosition();
-
     // Get data from local storage
     this._getLocalStorage();
-
     // Get event handlers
     mainForm.addEventListener('submit', this._newWorkout.bind(this));
-
     inputType.addEventListener('change', this._toggleElevationField.bind(this));
     containerWorkouts.addEventListener(
       'click',
       this.containerEvents.bind(this)
     );
-
+    sortType.addEventListener('change', this._sort.bind(this));
     formEdit.addEventListener('submit', this._editWorkout.bind(this));
     deleteAll.addEventListener('click', this._deleteAllWorkouts.bind(this));
-
-    // footer.addEventListener('click', this._sequentialInsertion.bind(this));
-
-    // edit.addEventListener('click', this._editList.bind(this), true);
   }
 
   _getPosition() {
@@ -132,10 +126,8 @@ class App {
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     }).addTo(this.#map);
-
     // Handling clicks on map
     this.#map.on('click', this._showForm.bind(this));
-
     this.#workouts.forEach(work => this._renderWorkoutMarker(work));
   }
 
@@ -157,7 +149,6 @@ class App {
       inputCadence.value =
       inputElevation.value =
         '';
-
     mainForm.style.display = 'none';
     mainForm.classList.add('hidden');
     setTimeout(() => (mainForm.style.display = 'grid'), 1);
@@ -169,7 +160,6 @@ class App {
       inputCadenceEdit.value =
       inputElevationEdit.value =
         '';
-
     formEdit.style.display = 'none';
     formEdit.classList.add('hidden');
     setTimeout(() => (formEdit.style.display = 'grid'), 1);
@@ -182,29 +172,21 @@ class App {
 
   _editWorkout(e) {
     e.preventDefault();
-
     const workout = this.#workouts.find(
       work => work.id === this.#currentWorkoutEL.dataset.id
     );
-
     const w = this.#workouts.findIndex(y => y.id === workout.id);
     const validInputs = (...inputs) =>
       inputs.every(inp => Number.isFinite(inp));
     const allPositive = (...inputs) => inputs.every(inp => inp > 0);
-
     // Get data from form
-
     this.#workouts[w].type = inputTypeEdit.value;
     this.#workouts[w].distance = +inputDistanceEdit.value;
     this.#workouts[w].duration = +inputDurationEdit.value;
-
     if (this.#workouts[w].type === 'running') {
       this.#workouts[w].cadence = +inputCadenceEdit.value;
       // Check if data is valid
       if (
-        // !Number.isFinite(distance) ||
-        // !Number.isFinite(duration) ||
-        // !Number.isFinite(cadence)
         !validInputs(
           this.#workouts[w].distance,
           this.#workouts[w].duration,
@@ -217,7 +199,6 @@ class App {
         )
       )
         return alert('Inputs have to be positive number');
-
       this.#workouts[w].pace =
         this.#workouts[w].duration / this.#workouts[w].distance;
     }
@@ -227,9 +208,6 @@ class App {
       this.#workouts[w].elevation = +inputElevationEdit.value;
 
       if (
-        // !Number.isFinite(distance) ||
-        // !Number.isFinite(duration) ||
-        // !Number.isFinite(cadence)
         !validInputs(
           this.#workouts[w].distance,
           this.#workouts[w].duration,
@@ -242,13 +220,10 @@ class App {
       this.#workouts[w].speed =
         this.#workouts[w].distance / this.#workouts[w].duration;
     }
-
     // Inserting back to its positon
-    this._sequentialInsertion();
-
+    this.sortFunction('date');
     // hide edit form
     this._hideEditForm();
-
     // Set local storage to all workouts
     this._setLocalStorage();
   }
@@ -257,17 +232,13 @@ class App {
     const validInputs = (...inputs) =>
       inputs.every(inp => Number.isFinite(inp));
     const allPositive = (...inputs) => inputs.every(inp => inp > 0);
-
     e.preventDefault();
-
     // Get data from form
-
     const type = inputType.value;
     const distance = +inputDistance.value;
     const duration = +inputDuration.value;
     const { lat, lng } = this.#mapEvent.latlng;
     let workout;
-
     // If workout running , create running object
     if (type === 'running') {
       const cadence = +inputCadence.value;
@@ -280,15 +251,12 @@ class App {
         !allPositive(distance, duration, cadence)
       )
         return alert('Inputs have to be positive number');
-
       workout = new Running([lat, lng], distance, duration, cadence);
     }
 
     // If workout cycling , create cycling object
-
     if (type === 'cycling') {
       const elevation = +inputElevation.value;
-
       if (
         // !Number.isFinite(distance) ||
         // !Number.isFinite(duration) ||
@@ -297,31 +265,23 @@ class App {
         !allPositive(distance, duration)
       )
         return alert('Inputs have to be positive number');
-
       workout = new Cycling([lat, lng], distance, duration, elevation);
     }
 
     // Add new object to workout Array
     this.#workouts.push(workout);
-
-    if (this.#workouts.length > 0) deleteContainer.style.display = 'flex';
+    if (this.#workouts.length > 0) Container.style.display = 'flex';
     // Render workout on map as marker
     this._renderWorkoutMarker(workout);
-
     // Render workout on list
     this._renderWorkout(workout);
-
     // Hideform+ clear input fields
-
     this._hideMainForm();
-
     // Set local storage to all workouts
-
     this._setLocalStorage();
   }
 
   //   Display marker
-
   _renderWorkoutMarker(workout) {
     const marker = L.marker(workout.coords)
       .addTo(this.#map)
@@ -426,23 +386,25 @@ class App {
     formEdit.insertAdjacentHTML('afterend', html);
   }
 
-  _sequentialInsertion() {
+  sortFunction(x) {
     const workoutAll = document.querySelectorAll('.workout');
     workoutAll.forEach(function (x) {
       x.style.display = 'none';
     });
 
-    this.#workouts.sort(function (a, b) {
-      const keyA = a.id;
-      const keyB = b.id;
-      if (keyA < keyB) return -1;
-      if (keyA > keyB) return 1;
-      return 0;
-    });
+    if (x === 'date') this.#workouts.sort((a, b) => a.id - b.id);
+    else if (x === 'distance')
+      this.#workouts.sort((a, b) => a.distance - b.distance);
+    else if (x === 'duration')
+      this.#workouts.sort((a, b) => a.duration - b.duration);
 
     this.#workouts.forEach(workout => {
       this._renderWorkout(workout);
     });
+  }
+  _sort() {
+    if (!sortType.value) return;
+    this.sortFunction(sortType.value);
   }
 
   containerEvents(e) {
@@ -481,21 +443,16 @@ class App {
 
   _removeWorkout(workout) {
     this.#workouts = this.#workouts.filter(work => work.id !== workout.id);
-    this._sequentialInsertion();
-
-    if (this.#workouts.length == 0) deleteContainer.style.display = 'none';
+    this.sortFunction('date');
+    if (this.#workouts.length == 0) Container.style.display = 'none';
     let newMarkers = [];
-
     this.#markers.forEach(marker => {
       if (marker._id === workout.id) this.#map.removeLayer(marker);
       else {
         newMarkers.push(marker);
       }
     });
-
     this.#markers = newMarkers;
-    console.log(this.#markers);
-
     // Set local storage to all workouts
     this._setLocalStorage();
   }
@@ -506,21 +463,17 @@ class App {
 
   _getLocalStorage() {
     const data = JSON.parse(localStorage.getItem('workouts'));
-
     if (!data) return;
-
     // this.#workouts = data;
-
     this.#workouts = data.map(work => {
       let obj;
       if (work.type === 'running') obj = new Running();
       if (work.type === 'cycling') obj = new Cycling();
-
       Object.assign(obj, work);
       return obj;
     });
 
-    if (this.#workouts.length > 0) deleteContainer.style.display = 'flex';
+    if (this.#workouts.length > 0) Container.style.display = 'flex';
     this.#workouts.forEach(work => {
       this._renderWorkout(work);
     });
@@ -541,10 +494,3 @@ class App {
 }
 
 const app = new App();
-
-// let arr = [4, 5, 8, 6, 3];
-
-// arr.sort((a, b) => a - b);
-// console.log(arr);
-
-// console.log(Date.now());

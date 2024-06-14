@@ -52,7 +52,7 @@ a:visited {
 .logo {
   height: 5.2rem;
   align-self: center;
-  margin-bottom: 4rem;
+  margin-bottom: 1rem;
 }
 
 .workouts {
@@ -93,8 +93,12 @@ a:visited {
   padding: 2rem;
   padding: 0.5rem;
 }
+
 .delete-all {
   border-bottom: 2px solid #c44d56;
+}
+.delete-all,
+.sort {
   width: fit-content;
   margin-top: 1rem;
 }
