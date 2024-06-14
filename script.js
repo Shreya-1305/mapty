@@ -9,7 +9,6 @@ class Workouts {
     this.coords = coords; // latitude //longitude
     this.distance = distance; //in km
     this.duration = duration; //in min
-    this.serialNumber = getSerialNumber();
   }
 
   _setDescription() {
@@ -24,16 +23,7 @@ class Workouts {
   click() {
     this.Clicks++;
   }
-
-  serialNumberIncrease() {
-    this.serialNumber++;
-  }
 }
-
-const getSerialNumber = function () {
-  const sr = +localStorage.getItem('serialNumber');
-  return sr;
-};
 
 class Running extends Workouts {
   type = 'running';
@@ -96,6 +86,7 @@ class App {
   #map;
   #mapEvent;
   #workouts = [];
+  #markers = [];
   #mapZoomLevel = 13;
   #currentWorkoutEL = 12;
 
@@ -157,7 +148,6 @@ class App {
   _showFormEdit() {
     formEdit.classList.remove('hidden');
     inputDistanceEdit.focus();
-    console.log(this.#currentWorkoutEL);
   }
 
   _hideMainForm() {
@@ -193,18 +183,11 @@ class App {
   _editWorkout(e) {
     e.preventDefault();
 
-    console.log(this);
-    console.log(this.#currentWorkoutEL);
     const workout = this.#workouts.find(
       work => work.id === this.#currentWorkoutEL.dataset.id
     );
-    console.log(e.target);
-    console.log(workout);
 
-    const w = this.#workouts.findIndex(
-      y => y.serialNumber === workout.serialNumber
-    );
-    console.log(w);
+    const w = this.#workouts.findIndex(y => y.id === workout.id);
     const validInputs = (...inputs) =>
       inputs.every(inp => Number.isFinite(inp));
     const allPositive = (...inputs) => inputs.every(inp => inp > 0);
@@ -259,10 +242,6 @@ class App {
       this.#workouts[w].speed =
         this.#workouts[w].distance / this.#workouts[w].duration;
     }
-
-    console.log(workout);
-
-    console.log(this.#workouts);
 
     // Inserting back to its positon
     this._sequentialInsertion();
@@ -322,9 +301,6 @@ class App {
       workout = new Cycling([lat, lng], distance, duration, elevation);
     }
 
-    // Increase serial number
-    workout.serialNumberIncrease();
-
     // Add new object to workout Array
     this.#workouts.push(workout);
 
@@ -347,7 +323,7 @@ class App {
   //   Display marker
 
   _renderWorkoutMarker(workout) {
-    L.marker(workout.coords)
+    const marker = L.marker(workout.coords)
       .addTo(this.#map)
       .bindPopup(
         L.popup({
@@ -362,6 +338,8 @@ class App {
         `${workout.type === 'running' ? '🏃‍♂️' : '🚴‍♀️'} ${workout.description}`
       )
       .openPopup();
+    marker._id = workout.id;
+    this.#markers.push(marker);
   }
 
   _createHTML(workout) {
@@ -450,19 +428,17 @@ class App {
 
   _sequentialInsertion() {
     const workoutAll = document.querySelectorAll('.workout');
-    console.log(this.#workouts);
     workoutAll.forEach(function (x) {
       x.style.display = 'none';
     });
 
     this.#workouts.sort(function (a, b) {
-      const keyA = a.serialNumber;
-      const keyB = b.serialNumber;
+      const keyA = a.id;
+      const keyB = b.id;
       if (keyA < keyB) return -1;
       if (keyA > keyB) return 1;
       return 0;
     });
-    console.log(this.#workouts);
 
     this.#workouts.forEach(workout => {
       this._renderWorkout(workout);
@@ -474,22 +450,18 @@ class App {
     if (!e.target.closest('.workout')) return;
     // debugger;
     this.#currentWorkoutEL = e.target.closest('.workout');
-    console.log(this.#currentWorkoutEL);
     const workout = this.#workouts.find(
       work => work.id === this.#currentWorkoutEL.dataset.id
     );
     this._moveToPopup(workout);
 
     if (e.target.closest('.edit')) {
-      console.log(this.#currentWorkoutEL);
       this.#currentWorkoutEL = e.target.closest('.workout');
-      console.log(e.target.closest('.edit'));
       this._showFormEdit();
     }
 
     if (e.target.closest('.remove')) {
       this.#currentWorkoutEL = e.target.closest('.workout');
-      console.log(this.#currentWorkoutEL);
       this._removeWorkout(workout);
     }
 
@@ -508,22 +480,28 @@ class App {
   }
 
   _removeWorkout(workout) {
-    this.#workouts = this.#workouts.filter(
-      work => work.serialNumber !== workout.serialNumber
-    );
+    this.#workouts = this.#workouts.filter(work => work.id !== workout.id);
     this._sequentialInsertion();
 
     if (this.#workouts.length == 0) deleteContainer.style.display = 'none';
+    let newMarkers = [];
+
+    this.#markers.forEach(marker => {
+      if (marker._id === workout.id) this.#map.removeLayer(marker);
+      else {
+        newMarkers.push(marker);
+      }
+    });
+
+    this.#markers = newMarkers;
+    console.log(this.#markers);
+
     // Set local storage to all workouts
     this._setLocalStorage();
   }
 
   _setLocalStorage() {
     localStorage.setItem('workouts', JSON.stringify(this.#workouts));
-    localStorage.setItem(
-      'serialNumber',
-      this.#workouts.slice(-1)[0].serialNumber
-    );
   }
 
   _getLocalStorage() {
@@ -541,7 +519,7 @@ class App {
       Object.assign(obj, work);
       return obj;
     });
-    console.log(this.#workouts);
+
     if (this.#workouts.length > 0) deleteContainer.style.display = 'flex';
     this.#workouts.forEach(work => {
       this._renderWorkout(work);
@@ -551,7 +529,6 @@ class App {
   reset() {
     localStorage.removeItem('workouts');
     location.reload();
-    localStorage.setItem('serialNumber', 0);
   }
 
   _deleteAllWorkouts() {
@@ -564,7 +541,6 @@ class App {
 }
 
 const app = new App();
-console.log(app);
 
 // let arr = [4, 5, 8, 6, 3];
 
