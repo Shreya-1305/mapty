@@ -419,7 +419,9 @@ class App {
     const workout = this.#workouts.find(
       work => work.id === this.#currentWorkoutEL.dataset.id
     );
-    this._moveToPopup(workout);
+    if (!e.target.closest('.remove')) {
+      this._moveToPopup(workout);
+    }
 
     if (e.target.closest('.edit')) {
       this.#currentWorkoutEL = e.target.closest('.workout');
@@ -462,10 +464,10 @@ class App {
   }
 
   _allMarkers() {
-    // var bounds = L.latLngBounds(this.#markers);
+    if (this.#markers.length == 0) alert('No Workout Markers to display');
     let latlngs = this.#markers.map(marker => marker.getLatLng());
     let latlngBounds = L.latLngBounds(latlngs);
-    this.#map.fitBounds(latlngBounds); //works!
+    this.#map.fitBounds(latlngBounds);
   }
 
   _setLocalStorage() {
