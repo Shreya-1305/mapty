@@ -82,6 +82,7 @@ const formEdit = document.querySelector('.form-edit');
 const deleteAll = document.querySelector('.delete-all');
 const Container = document.querySelector('.container');
 const sortType = document.querySelector('.form-input--sortType');
+const displayAllMarkers = document.querySelector('.display-all-markers');
 
 class App {
   #map;
@@ -106,6 +107,7 @@ class App {
     sortType.addEventListener('change', this._sort.bind(this));
     formEdit.addEventListener('submit', this._editWorkout.bind(this));
     deleteAll.addEventListener('click', this._deleteAllWorkouts.bind(this));
+    displayAllMarkers.addEventListener('click', this._allMarkers.bind(this));
   }
 
   _getPosition() {
@@ -132,12 +134,14 @@ class App {
   }
 
   _showForm(mapE) {
+    if (!formEdit.classList.contains('hidden')) return;
     this.#mapEvent = mapE;
     mainForm.classList.remove('hidden');
     inputDistance.focus();
   }
 
   _showFormEdit() {
+    if (!mainForm.classList.contains('hidden')) return;
     formEdit.classList.remove('hidden');
     inputDistanceEdit.focus();
   }
@@ -455,6 +459,13 @@ class App {
     this.#markers = newMarkers;
     // Set local storage to all workouts
     this._setLocalStorage();
+  }
+
+  _allMarkers() {
+    // var bounds = L.latLngBounds(this.#markers);
+    let latlngs = this.#markers.map(marker => marker.getLatLng());
+    let latlngBounds = L.latLngBounds(latlngs);
+    this.#map.fitBounds(latlngBounds); //works!
   }
 
   _setLocalStorage() {
