@@ -17,7 +17,7 @@ As soon as a workout gets submitted mapty will process the user data makes sever
 - the location
 - calculations (pace, speed)
 
-The UI can be manipulated from the user by:
+
 
 This was a learning project for a portfolio project! 
 @copyright @jonasschmedtmann
@@ -26,6 +26,7 @@ This was a learning project for a portfolio project!
 
 I have added following feature to make it more advanced. 
 
+The UI can be manipulated from the user by:
 - Editing workouts
 - Deleting workouts
 - Deleting all workouts
